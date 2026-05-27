@@ -557,7 +557,7 @@ const getProfileDetail = async (req, res) => {
         const isObjectId = userId?.length === 24;
 
         const user = await User
-            .findOne(isObjectId ? { _id: userId } : { unique_id: userId })
+            .findOne(isObjectId ? { $or: [{ _id: userId }, { patientId: userId }] } : { unique_id: userId })
             .select('-passwordHash')
             .lean();
 
@@ -587,7 +587,7 @@ const getProfileDetail = async (req, res) => {
             LabAppointment.countDocuments({ patientId: fullId })
         ]);
 
-        const notAllowed = (patient.status !== 'approved') && ((doctorAppointmentsCount + labAppointmentsCount) > 5);
+        const notAllowed = (patient?.status !== 'approved') && ((doctorAppointmentsCount + labAppointmentsCount) > 5);
 
         return res.status(200).json({
             success: true,
