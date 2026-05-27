@@ -143,8 +143,6 @@ io.use((socket, next) => {
 
 // ================= SOCKET LOGIC =================
 const onlineUsers = new Map(); // userId -> socketId
-app.set('socketio', io);
-app.set('onlineUsers', onlineUsers);
 const activeCalls = new Set(); // userIds
 const groupCallParticipants = new Map();
 io.on("connection", (socket) => {

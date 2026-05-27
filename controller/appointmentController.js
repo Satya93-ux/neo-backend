@@ -447,28 +447,6 @@ const doctorPrescription = async (req, res) => {
                 message: `${isExist.name} has added a new prescription (id ${add?.customId}) for ${diagnosis}.`
             })
             await DoctorAppointment.findByIdAndUpdate(isAppointment._id, { prescriptionId: add._id }, { new: true })
-            
-            // Emit socket event with updated payload immediately after saving
-            try {
-                const io = req.app.get('socketio');
-                const onlineUsers = req.app.get('onlineUsers');
-                if (io) {
-                    io.emit("new-prescription", add);
-                    if (onlineUsers) {
-                        const patientSocketId = onlineUsers.get(patientId.toString());
-                        if (patientSocketId) {
-                            io.to(patientSocketId).emit("new-prescription", add);
-                        }
-                        const doctorSocketId = onlineUsers.get(doctorId.toString());
-                        if (doctorSocketId) {
-                            io.to(doctorSocketId).emit("new-prescription", add);
-                        }
-                    }
-                }
-            } catch (socketErr) {
-                console.error("Socket emit error in doctorPrescription:", socketErr);
-            }
-
             return res.status(200).json({ message: "Presctiption add successfully", success: true })
         } else {
             return res.status(200).json({ message: "Presctiption not added", success: false })
@@ -543,34 +521,6 @@ const prescriptionAction = async (req, res) => {
                     description: `Prescription status updated ${update?.status} for ${isExist?.patientId?.name} with appointment id ${isExist?.appointmentId?.customId}.`
                 })
             }
-            
-            // Emit socket event with updated payload immediately after saving
-            try {
-                const io = req.app.get('socketio');
-                const onlineUsers = req.app.get('onlineUsers');
-                if (io) {
-                    io.emit("new-prescription", update);
-                    if (onlineUsers) {
-                        const patientId = update.patientId || isExist.patientId?._id || isExist.patientId;
-                        const doctorId = update.doctorId || isExist.doctorId?._id || isExist.doctorId;
-                        if (patientId) {
-                            const patientSocketId = onlineUsers.get(patientId.toString());
-                            if (patientSocketId) {
-                                io.to(patientSocketId).emit("new-prescription", update);
-                            }
-                        }
-                        if (doctorId) {
-                            const doctorSocketId = onlineUsers.get(doctorId.toString());
-                            if (doctorSocketId) {
-                                io.to(doctorSocketId).emit("new-prescription", update);
-                            }
-                        }
-                    }
-                }
-            } catch (socketErr) {
-                console.error("Socket emit error in prescriptionAction:", socketErr);
-            }
-
             return res.status(200).json({ message: "Prescription updated successfully", success: true })
         } else {
             return res.status(200).json({ message: "Prescription not updated", success: false })
@@ -610,28 +560,6 @@ const editDoctorPrescription = async (req, res) => {
                 title: "Prescription Updated",
                 message: `Dr. ${isExist.name} has updated a prescription (id ${add?.customId}) for you.`
             })
-
-            // Emit socket event with updated payload immediately after saving
-            try {
-                const io = req.app.get('socketio');
-                const onlineUsers = req.app.get('onlineUsers');
-                if (io) {
-                    io.emit("new-prescription", add);
-                    if (onlineUsers) {
-                        const patientSocketId = onlineUsers.get(patientId.toString());
-                        if (patientSocketId) {
-                            io.to(patientSocketId).emit("new-prescription", add);
-                        }
-                        const doctorSocketId = onlineUsers.get(doctorId.toString());
-                        if (doctorSocketId) {
-                            io.to(doctorSocketId).emit("new-prescription", add);
-                        }
-                    }
-                }
-            } catch (socketErr) {
-                console.error("Socket emit error in editDoctorPrescription:", socketErr);
-            }
-
             return res.status(200).json({ message: "Presctiption update successfully", success: true })
         } else {
             return res.status(200).json({ message: "Presctiption not added", success: false })
