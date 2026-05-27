@@ -766,6 +766,28 @@ const allotmentPrescription = async (req, res) => {
         shortDesc: "Prescription created",
         description: `Prescription has been created for patient ${isExist?.name} in bed allotment on ${new Date(isAllotment?.allotmentDate).toLocaleDateString('en-GB')}.`,
       })
+
+      // Emit socket event with updated payload immediately after saving
+      try {
+        const io = req.app.get('socketio');
+        const onlineUsers = req.app.get('onlineUsers');
+        if (io) {
+          io.emit("new-prescription", add);
+          if (onlineUsers) {
+            const patientSocketId = onlineUsers.get(patientId.toString());
+            if (patientSocketId) {
+              io.to(patientSocketId).emit("new-prescription", add);
+            }
+            const doctorSocketId = onlineUsers.get(doctorId.toString());
+            if (doctorSocketId) {
+              io.to(doctorSocketId).emit("new-prescription", add);
+            }
+          }
+        }
+      } catch (socketErr) {
+        console.error("Socket emit error in allotmentPrescription:", socketErr);
+      }
+
       return res.status(200).json({ message: "Presctiption add successfully", success: true })
     } else {
       return res.status(200).json({ message: "Presctiption not added", success: false })
@@ -839,6 +861,34 @@ const prescriptionAction = async (req, res) => {
         shortDesc: "Prescription status updated",
         description: `Prescription status has been updated to ${status} for patient ${isExist?.patientId?.name}.`,
       })
+
+      // Emit socket event with updated payload immediately after saving
+      try {
+        const io = req.app.get('socketio');
+        const onlineUsers = req.app.get('onlineUsers');
+        if (io) {
+          io.emit("new-prescription", update);
+          if (onlineUsers) {
+            const patientId = update.patientId || isExist.patientId?._id || isExist.patientId;
+            const doctorId = update.doctorId || isExist.doctorId?._id || isExist.doctorId;
+            if (patientId) {
+              const patientSocketId = onlineUsers.get(patientId.toString());
+              if (patientSocketId) {
+                io.to(patientSocketId).emit("new-prescription", update);
+              }
+            }
+            if (doctorId) {
+              const doctorSocketId = onlineUsers.get(doctorId.toString());
+              if (doctorSocketId) {
+                io.to(doctorSocketId).emit("new-prescription", update);
+              }
+            }
+          }
+        }
+      } catch (socketErr) {
+        console.error("Socket emit error in bed prescriptionAction:", socketErr);
+      }
+
       return res.status(200).json({ message: "Prescription updated successfully", success: true })
     } else {
       return res.status(200).json({ message: "Prescription not updated", success: false })
@@ -872,6 +922,28 @@ const editAllotmentPrescription = async (req, res) => {
         shortDesc: "Prescription updated",
         description: `Prescription has been updated for patient ${isExist?.patientId?.name} for bed allotment on ${new Date(isAllotment?.allotmentDate).toLocaleDateString('en-GB')}.`,
       })
+
+      // Emit socket event with updated payload immediately after saving
+      try {
+        const io = req.app.get('socketio');
+        const onlineUsers = req.app.get('onlineUsers');
+        if (io) {
+          io.emit("new-prescription", add);
+          if (onlineUsers) {
+            const patientSocketId = onlineUsers.get(patientId.toString());
+            if (patientSocketId) {
+              io.to(patientSocketId).emit("new-prescription", add);
+            }
+            const doctorSocketId = onlineUsers.get(doctorId.toString());
+            if (doctorSocketId) {
+              io.to(doctorSocketId).emit("new-prescription", add);
+            }
+          }
+        }
+      } catch (socketErr) {
+        console.error("Socket emit error in editAllotmentPrescription:", socketErr);
+      }
+
       return res.status(200).json({ message: "Presctiption update successfully", success: true })
     } else {
       return res.status(200).json({ message: "Presctiption not added", success: false })

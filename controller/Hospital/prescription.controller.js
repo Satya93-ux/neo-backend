@@ -35,6 +35,31 @@ export const addPrescription = async (req, res) => {
       status: status || "Active" // ✅ SAFE DEFAULT
     });
 
+    // Emit socket event with updated payload immediately after saving
+    try {
+      const io = req.app.get('socketio');
+      const onlineUsers = req.app.get('onlineUsers');
+      if (io) {
+        io.emit("new-prescription", prescription);
+        if (onlineUsers) {
+          if (patientId) {
+            const patientSocketId = onlineUsers.get(patientId.toString());
+            if (patientSocketId) {
+              io.to(patientSocketId).emit("new-prescription", prescription);
+            }
+          }
+          if (doctorId) {
+            const doctorSocketId = onlineUsers.get(doctorId.toString());
+            if (doctorSocketId) {
+              io.to(doctorSocketId).emit("new-prescription", prescription);
+            }
+          }
+        }
+      }
+    } catch (socketErr) {
+      console.error("Socket emit error in hospital addPrescription:", socketErr);
+    }
+
     res.json({
       success: true,
       message: "Prescription added successfully",
@@ -126,9 +151,37 @@ export const updatePrescription = async (req, res) => {
 
     await prescription.save();
 
+    // Emit socket event with updated payload immediately after saving
+    try {
+      const io = req.app.get('socketio');
+      const onlineUsers = req.app.get('onlineUsers');
+      if (io) {
+        io.emit("new-prescription", prescription);
+        if (onlineUsers) {
+          const patientId = prescription.patientId;
+          const doctorId = prescription.doctorId;
+          if (patientId) {
+            const patientSocketId = onlineUsers.get(patientId.toString());
+            if (patientSocketId) {
+              io.to(patientSocketId).emit("new-prescription", prescription);
+            }
+          }
+          if (doctorId) {
+            const doctorSocketId = onlineUsers.get(doctorId.toString());
+            if (doctorSocketId) {
+              io.to(doctorSocketId).emit("new-prescription", prescription);
+            }
+          }
+        }
+      }
+    } catch (socketErr) {
+      console.error("Socket emit error in hospital updatePrescription:", socketErr);
+    }
+
     res.json({
       success: true,
-      message: "Prescription updated"
+      message: "Prescription updated",
+      data: prescription
     });
 
   } catch (err) {
